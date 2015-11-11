@@ -18,7 +18,7 @@ module Payday
       pdf = Prawn::Document.new(page_size: invoice_or_default(invoice, :page_size))
 
       # set up some default styling
-      pdf.font_size(8)
+      pdf.font_size(12)
 
       stamp(invoice, pdf)
       company_banner(invoice, pdf)
@@ -78,9 +78,9 @@ module Payday
 
       # render the company details
       table_data = []
-      table_data << [bold_cell(pdf, invoice_or_default(invoice, :company_name).strip, size: 12)]
+      table_data << [bold_cell(pdf, invoice_or_default(invoice, :company_name).strip, size: 14, align: :right)]
 
-      invoice_or_default(invoice, :company_details).lines.each { |line| table_data << [line] }
+      invoice_or_default(invoice, :company_details).lines.each { |line| table_data << [cell(pdf, line, align: :right, :leading => -5)] }
 
       table = pdf.make_table(table_data, cell_style: { borders: [], padding: 0 })
       pdf.bounding_box([pdf.bounds.width - table.width, pdf.bounds.top], width: table.width, height: table.height + 5) do
@@ -123,7 +123,7 @@ module Payday
       # invoice number
       if defined?(invoice.invoice_number) && invoice.invoice_number
         table_data << [bold_cell(pdf, I18n.t("payday.invoice.invoice_no", default: "Invoice #:")),
-                       bold_cell(pdf, invoice.invoice_number.to_s, align: :right)]
+                       cell(pdf, invoice.invoice_number.to_s, align: :right)]
       end
 
       # invoice date
@@ -135,7 +135,7 @@ module Payday
         end
 
         table_data << [bold_cell(pdf, I18n.t("payday.invoice.invoice_date", default: "Invoice Date:")),
-                       bold_cell(pdf, invoice_date, align: :right)]
+                       cell(pdf, invoice_date, align: :right)]
       end
 
       # Due on
@@ -147,7 +147,7 @@ module Payday
         end
 
         table_data << [bold_cell(pdf, I18n.t("payday.invoice.due_date", default: "Due Date:")),
-                       bold_cell(pdf, due_date, align: :right)]
+                       cell(pdf, due_date, align: :right)]
       end
 
       # Paid on
@@ -181,7 +181,7 @@ module Payday
       end
 
       if table_data.length > 0
-        pdf.table(table_data, cell_style: { borders: [], padding: [1, 10, 1, 1] })
+        pdf.table(table_data, cell_style: { borders: [], padding: [0,0,0,0] })
       end
     end
 
@@ -200,9 +200,9 @@ module Payday
 
       pdf.move_cursor_to(pdf.cursor - 20)
       pdf.table(table_data, width: pdf.bounds.width, header: true,
-                cell_style: { border_width: 0.5, border_color: "cccccc",
-                              padding: [5, 10] },
-                row_colors: %w(dfdfdf ffffff)) do
+                cell_style: { borders: [], border_color: "cccccc",
+                              padding: [0, 0] },
+                row_colors: %w(ffffff)) do
 
         # left align the number columns
         columns(1..3).rows(1..row_length - 1).style(align: :right)
@@ -254,12 +254,8 @@ module Payday
         cell(pdf, number_to_currency(invoice.total, invoice),
              size: 12, align: :right)
       ]
-      table = pdf.make_table(table_data, cell_style: { borders: [] })
-      pdf.bounding_box([pdf.bounds.width - table.width, pdf.cursor],
-                       width: table.width, height: table.height + 2) do
 
-        table.draw
-      end
+      pdf.table(table_data)
     end
 
     def self.notes(invoice, pdf)
